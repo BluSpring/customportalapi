@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
 import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.kyrptonaught.customportalapi.util.CustomPortalHelper;
+import net.kyrptonaught.customportalapi.util.CustomTeleporter;
 import net.kyrptonaught.customportalapi.util.PortalLink;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -160,7 +161,7 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
     }
 
     @Override
-    public TeleportTarget getTPTargetInPortal(ServerWorld world, BlockLocating.Rectangle portalRect, Direction.Axis portalAxis, Vec3d prevOffset, Entity entity) {
+    public TeleportTarget getTPTargetInPortal(ServerWorld world, Block frameBlock, BlockLocating.Rectangle portalRect, Direction.Axis portalAxis, Vec3d prevOffset, Entity entity) {
         EntityDimensions entityDimensions = entity.getDimensions(entity.getPose());
         double xSize = portalRect.width - entityDimensions.width();
         double zSize = portalRect.height - entityDimensions.width();
@@ -169,7 +170,7 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
         double y = MathHelper.lerp(prevOffset.y, portalRect.lowerLeft.getY() - 1, portalRect.lowerLeft.getY() + 1);
         double z = MathHelper.lerp(prevOffset.z, portalRect.lowerLeft.getZ(), portalRect.lowerLeft.getZ() + zSize);
 
-        TeleportTarget.PostDimensionTransition post = TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(entityx -> entityx.addPortalChunkTicketAt(portalRect.lowerLeft));
+        TeleportTarget.PostDimensionTransition post = CustomTeleporter.sendTravelThroughPortalPacket(frameBlock).then(entityx -> entityx.addPortalChunkTicketAt(portalRect.lowerLeft));
         return new TeleportTarget(world, new Vec3d(x, portalRect.lowerLeft.getY() + 1, z), entity.getVelocity(), entity.getYaw(), entity.getPitch(), post);
     }
 }

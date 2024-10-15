@@ -8,16 +8,16 @@ import net.kyrptonaught.customportalapi.portal.linking.DimensionalBlockPos;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.packet.s2c.play.WorldEventS2CPacket;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
-import net.minecraft.world.BlockLocating;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.TeleportTarget;
-import net.minecraft.world.World;
+import net.minecraft.world.*;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.dimension.DimensionType;
 
@@ -62,7 +62,7 @@ public class CustomTeleporter {
                 if (!portalFrameTester.isAlreadyLitPortalFrame()) {
                     portalFrameTester.lightPortal(frameBlock);
                 }
-                return portalFrameTester.getTPTargetInPortal(destinationWorld, portalFrameTester.getRectangle(), portalAxis, portalFrameTester.getEntityOffsetInPortal(fromPortalRectangle, entity, portalAxis), entity);
+                return portalFrameTester.getTPTargetInPortal(destinationWorld, frameBlock, portalFrameTester.getRectangle(), portalAxis, portalFrameTester.getEntityOffsetInPortal(fromPortalRectangle, entity, portalAxis), entity);
             }
         }
         return createDestinationPortal(destinationWorld, entity, portalAxis, fromPortalRectangle, frameBlock.getDefaultState());
@@ -81,7 +81,7 @@ public class CustomTeleporter {
             PortalFrameTester portalFrameTester = CustomPortalApiRegistry.getPortalLinkFromBase(frameBlock.getBlock()).getFrameTester().createInstanceOfPortalFrameTester();
 
             CustomPortalsMod.portalLinkingStorage.createLink(portalFramePos.lowerLeft, entity.getWorld().getRegistryKey(), portal.get().lowerLeft, destination.getRegistryKey());
-            return portalFrameTester.getTPTargetInPortal(destination, portal.get(), axis, portalFrameTester.getEntityOffsetInPortal(portalFramePos, entity, axis), entity);
+            return portalFrameTester.getTPTargetInPortal(destination, frameBlock.getBlock(), portal.get(), axis, portalFrameTester.getEntityOffsetInPortal(portalFramePos, entity, axis), entity);
         }
         return idkWhereToPutYou(destination, entity, blockPos3);
     }
@@ -90,5 +90,15 @@ public class CustomTeleporter {
         CustomPortalsMod.logError("Unable to find tp location, forced to place on top of world");
         BlockPos destinationPos = world.getTopPosition(Heightmap.Type.WORLD_SURFACE, pos);
         return new TeleportTarget(world, new Vec3d(destinationPos.getX() + .5, destinationPos.getY(), destinationPos.getZ() + .5), entity.getVelocity(), entity.getYaw(), entity.getPitch(), TeleportTarget.NO_OP);
+    }
+
+
+    public static TeleportTarget.PostDimensionTransition sendTravelThroughPortalPacket(Block portalFrame) {
+        int portalFrameBlockID = Registries.BLOCK.getRawId(portalFrame);
+        return entity -> {
+            if (entity instanceof ServerPlayerEntity serverPlayerEntity) {
+                serverPlayerEntity.networkHandler.sendPacket(new WorldEventS2CPacket(WorldEvents.TRAVEL_THROUGH_PORTAL, BlockPos.ORIGIN, portalFrameBlockID, false));
+            }
+        };
     }
 }

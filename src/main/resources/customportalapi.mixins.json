@@ -9,6 +9,7 @@
     "portalLighters.PotionEntityMixin"
   ],
   "client": [
+    "client.ClientPlayerEntityMixin",
     "client.InGameHudMixin",
     "client.PortalManagerAccessor",
     "client.WorldRendererMixin"

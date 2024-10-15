@@ -1,4 +1,7 @@
 ## Changelog
+**0.0.1-beta 67**
+Fix inPortalAmbianceSound and postTPPortalAmbiance sounds
+
 **0.0.1-beta 66**
 Port to 1.21
 

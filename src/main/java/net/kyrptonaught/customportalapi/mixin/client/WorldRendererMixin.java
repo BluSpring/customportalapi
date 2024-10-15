@@ -27,10 +27,11 @@ public class WorldRendererMixin {
         if (eventId == 1032 && data != 0) {
             Block block = Registries.BLOCK.get(data);
             PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(block);
-            if (link != null && link.getPostTpPortalAmbienceEvent().hasEvent())
+            if (link != null && link.getPostTpPortalAmbienceEvent().hasEvent()) {
                 instance.play(link.getPostTpPortalAmbienceEvent().execute(client.player).getInstance());
-        } else {
-            instance.play(sound);
+                return;
+            }
         }
+        instance.play(sound);
     }
 }
