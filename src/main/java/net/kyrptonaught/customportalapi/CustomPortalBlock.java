@@ -23,6 +23,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.*;
+import net.minecraft.world.tick.ScheduledTickView;
 import org.jetbrains.annotations.Nullable;
 
 public class CustomPortalBlock extends Block implements Portal {
@@ -46,13 +47,13 @@ public class CustomPortalBlock extends Block implements Portal {
     }
 
     @Override
-    public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState newState, WorldAccess world, BlockPos pos, BlockPos posFrom) {
+    protected BlockState getStateForNeighborUpdate(BlockState state, WorldView world, ScheduledTickView tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, Random random) {
         Block block = getPortalBase((World) world, pos);
         PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(block);
         if (link != null) {
-            PortalFrameTester portalFrameTester = link.getFrameTester().createInstanceOfPortalFrameTester().init(world, pos, CustomPortalHelper.getAxisFrom(state), block);
+            PortalFrameTester portalFrameTester = link.getFrameTester().createInstanceOfPortalFrameTester().init((WorldAccess) world, pos, CustomPortalHelper.getAxisFrom(state), block);
             if (portalFrameTester.isAlreadyLitPortalFrame())
-                return super.getStateForNeighborUpdate(state, direction, newState, world, pos, posFrom);
+                return super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random);
         }
         //todo handle unknown portallink
 
@@ -65,8 +66,7 @@ public class CustomPortalBlock extends Block implements Portal {
     }
 
     @Override
-    @Environment(EnvType.CLIENT)
-    public ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state) {
+    protected ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state, boolean includeData) {
         return ItemStack.EMPTY;
     }
 

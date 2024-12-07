@@ -19,12 +19,15 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -57,21 +60,21 @@ public class CustomPortalsMod implements ModInitializer {
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos usedBlockPos = blockHit.getBlockPos();
                         if (PortalPlacer.attemptPortalLight(world, usedBlockPos.offset(blockHit.getSide()), PortalIgnitionSource.ItemUseSource(item).withPlayer(player))) {
-                            return TypedActionResult.success(stack);
+                            return ActionResult.SUCCESS_SERVER;
                         }
                     }
                 }
             }
-            return TypedActionResult.pass(stack);
+            return ActionResult.PASS;
         }));
 
         PayloadTypeRegistry.playS2C().register(LinkSyncPacket.PACKET_ID, LinkSyncPacket.codec);
         PayloadTypeRegistry.playS2C().register(ForcePlacePacket.PACKET_ID, ForcePlacePacket.codec);
 
-        //CustomPortalBuilder.beginPortal().frameBlock(Blocks.GLOWSTONE).destDimID(Identifier.of("the_nether")).lightWithWater().setPortalSearchYRange(126, 256).tintColor(125, 20, 20).registerPortal();
-        //CustomPortalBuilder.beginPortal().frameBlock(Blocks.OBSIDIAN).destDimID(Identifier.of("the_end")).tintColor(66, 135, 245).registerPortalForced();
-        //CustomPortalBuilder.beginPortal().frameBlock(Blocks.COBBLESTONE).lightWithItem(Items.STICK).destDimID(Identifier.of("the_end")).tintColor(45, 24, 45).flatPortal().registerPortal();
-        /*
+        CustomPortalBuilder.beginPortal().frameBlock(Blocks.GLOWSTONE).destDimID(Identifier.of("the_nether")).lightWithWater().setPortalSearchYRange(126, 256).tintColor(125, 20, 20).registerPortal();
+        CustomPortalBuilder.beginPortal().frameBlock(Blocks.OBSIDIAN).destDimID(Identifier.of("the_end")).tintColor(66, 135, 245).registerPortalForced();
+        CustomPortalBuilder.beginPortal().frameBlock(Blocks.COBBLESTONE).lightWithItem(Items.STICK).destDimID(Identifier.of("the_end")).tintColor(45, 24, 45).flatPortal().registerPortal();
+
         CustomPortalBuilder.beginPortal()
                 .frameBlock(Blocks.EMERALD_BLOCK)
                 .lightWithWater()
@@ -81,7 +84,7 @@ public class CustomPortalsMod implements ModInitializer {
                 .registerInPortalAmbienceSound(player -> new CPASoundEventData(SoundEvents.BLOCK_ANVIL_LAND, player.getRandom().nextFloat() * 0.4F + 0.8F, 0.25F))
                 .registerPostTPPortalAmbience(player -> new CPASoundEventData(SoundEvents.BLOCK_ANVIL_LAND, player.getRandom().nextFloat() * 0.4F + 0.8F, 0.25F))
                 .registerPortal();
-         */
+
     }
 
     public static void logError(String message) {
@@ -95,7 +98,17 @@ public class CustomPortalsMod implements ModInitializer {
     // to guarantee block exists before use, unsure how safe this is but works for now. Don't want to switch to using a custom entrypoint to break compatibility with existing mods just yet
     //todo fix this with CustomPortalBuilder?
     static {
-        portalBlock = new CustomPortalBlock(AbstractBlock.Settings.create().noCollision().ticksRandomly().strength(-1.0f).sounds(BlockSoundGroup.GLASS).luminance(state -> 11).pistonBehavior(PistonBehavior.BLOCK));
-        Registry.register(Registries.BLOCK, Identifier.of(CustomPortalsMod.MOD_ID, "customportalblock"), portalBlock);
+        portalBlock = (CustomPortalBlock) Blocks.register(
+                RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(CustomPortalsMod.MOD_ID, "customportalblock")),
+                CustomPortalBlock::new,
+                AbstractBlock.Settings.create()
+                        .noCollision()
+                        .ticksRandomly()
+                        .strength(-1.0f)
+                        .sounds(BlockSoundGroup.GLASS)
+                        .luminance(state -> 11)
+                        .pistonBehavior(PistonBehavior.BLOCK)
+        );
+
     }
 }
