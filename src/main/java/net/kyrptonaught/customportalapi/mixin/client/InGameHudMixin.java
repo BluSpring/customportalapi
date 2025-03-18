@@ -1,6 +1,7 @@
 package net.kyrptonaught.customportalapi.mixin.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
@@ -9,7 +10,6 @@ import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.kyrptonaught.customportalapi.util.ColorUtil;
 import net.kyrptonaught.customportalapi.util.PortalLink;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.Portal;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
@@ -37,22 +36,22 @@ public class InGameHudMixin {
     @Unique
     private int lastColor = -1;
 
-    @Redirect(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;setShaderColor(FFFF)V", ordinal = 0))
-    public void changeColor(DrawContext instance, float red, float green, float blue, float alpha) {
+    @WrapOperation(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;setShaderColor(FFFF)V", ordinal = 0))
+    public void changeColor(DrawContext instance, float red, float green, float blue, float alpha, Operation<Void> original) {
         isCustomPortal(client.player);
         if (lastColor >= 0) {
             float[] colors = ColorUtil.getColorForBlock(lastColor);
-            RenderSystem.setShaderColor(colors[0], colors[1], colors[2], alpha);
+            original.call(instance, colors[0], colors[1], colors[2], alpha);
         } else
-            RenderSystem.setShaderColor(red, green, blue, alpha);
+            original.call(instance, red, green, blue, alpha);
     }
 
-    @Redirect(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/block/BlockModels;getModelParticleSprite(Lnet/minecraft/block/BlockState;)Lnet/minecraft/client/texture/Sprite;"))
-    public Sprite renderCustomPortalOverlay(BlockModels blockModels, BlockState blockState) {
+    @WrapOperation(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/block/BlockModels;getModelParticleSprite(Lnet/minecraft/block/BlockState;)Lnet/minecraft/client/texture/Sprite;"))
+    public Sprite renderCustomPortalOverlay(BlockModels instance, BlockState state, Operation<Sprite> original) {
         if (lastColor >= 0) {
-            return this.client.getBlockRenderManager().getModels().getModelParticleSprite(CustomPortalsMod.portalBlock.getDefaultState());
+            return original.call(instance, CustomPortalsMod.portalBlock.getDefaultState());
         }
-        return this.client.getBlockRenderManager().getModels().getModelParticleSprite(Blocks.NETHER_PORTAL.getDefaultState());
+        return original.call(instance, state);
     }
 
 
