@@ -1,10 +1,17 @@
 package net.kyrptonaught.customportalapi.portal.linking;
 
-import net.minecraft.nbt.NbtCompound;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 public class DimensionalBlockPos {
+    public static final Codec<DimensionalBlockPos> CODEC = RecordCodecBuilder.create(
+            instance -> instance.group(
+                    Identifier.CODEC.fieldOf("dimID").forGetter(DimensionalBlockPos::getDimension),
+                    Codec.LONG.fieldOf("pos").forGetter(DimensionalBlockPos::getPosLong)
+            ).apply(instance, DimensionalBlockPos::new));
+
     public Identifier dimensionType;
     public BlockPos pos;
 
@@ -13,13 +20,15 @@ public class DimensionalBlockPos {
         this.dimensionType = dimension;
     }
 
-    public static DimensionalBlockPos fromTag(NbtCompound tag) {
-        return new DimensionalBlockPos(Identifier.of(tag.getString("dimID")), BlockPos.fromLong(tag.getLong("pos")));
+    public DimensionalBlockPos(Identifier dimension, Long pos) {
+        this(dimension, BlockPos.fromLong(pos));
     }
 
-    public NbtCompound toTag(NbtCompound tag) {
-        tag.putString("dimID", this.dimensionType.toString());
-        tag.putLong("pos", pos.asLong());
-        return tag;
+    public Identifier getDimension() {
+        return dimensionType;
+    }
+
+    public Long getPosLong() {
+        return pos.asLong();
     }
 }

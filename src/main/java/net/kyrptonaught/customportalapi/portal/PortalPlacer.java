@@ -48,7 +48,7 @@ public class PortalPlacer {
         PortalFrameTester portalFrameTester = link.getFrameTester().createInstanceOfPortalFrameTester();
 
         int topY = Math.min(world.getTopYInclusive(), world.getBottomY() + world.getLogicalHeight()) - 5;
-        
+
         int bottomY = world.getBottomY() + 5;
 
         if (world.getRegistryKey().getValue().equals(link.dimID)) {

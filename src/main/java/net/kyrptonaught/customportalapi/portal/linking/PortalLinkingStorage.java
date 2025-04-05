@@ -1,54 +1,52 @@
 package net.kyrptonaught.customportalapi.portal.linking;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.minecraft.datafixer.DataFixTypes;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.PersistentState;
+import net.minecraft.world.PersistentStateType;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PortalLinkingStorage extends PersistentState {
+    public static final Codec<PortalLinkingStorage> CODEC = RecordCodecBuilder.create(
+            instance -> instance.group(
+                    Entry.CODEC.listOf().fieldOf("portalLinks").forGetter(PortalLinkingStorage::getEntries)
+            ).apply(instance, PortalLinkingStorage::new));
 
     private final ConcurrentHashMap<Identifier, ConcurrentHashMap<BlockPos, DimensionalBlockPos>> portalLinks = new ConcurrentHashMap<>();
 
     public PortalLinkingStorage() {
-        super();
+
     }
 
-    public static Type<PortalLinkingStorage> getPersistentStateType() {
-        return new Type<>(PortalLinkingStorage::new, PortalLinkingStorage::fromNbt, DataFixTypes.LEVEL);
-    }
-
-    public static PortalLinkingStorage fromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
-        PortalLinkingStorage cman = new PortalLinkingStorage();
-        NbtList links = (NbtList) tag.get("portalLinks");
-
-        for (int i = 0; i < links.size(); i++) {
-            NbtCompound link = links.getCompound(i);
-            DimensionalBlockPos toTag = DimensionalBlockPos.fromTag(link.getCompound("to"));
-            cman.addLink(BlockPos.fromLong(link.getLong("fromPos")), Identifier.of(link.getString("fromDimID")), toTag.pos, toTag.dimensionType);
+    public PortalLinkingStorage(List<Entry> entries) {
+        for (Entry entry : entries) {
+            addLink(BlockPos.fromLong(entry.fromPos()), entry.fromID, entry.to().pos, entry.to().getDimension());
         }
-        return cman;
     }
 
-    public NbtCompound writeNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
-        NbtList links = new NbtList();
+    public static PersistentStateType<PortalLinkingStorage> getPersistentStateType() {
+        return new PersistentStateType<>(CustomPortalsMod.MOD_ID, PortalLinkingStorage::new, CODEC, DataFixTypes.LEVEL);
+    }
+
+    public List<Entry> getEntries() {
+        List<Entry> entries = new ArrayList<>();
+
         portalLinks.keys().asIterator().forEachRemaining(dimKey -> {
             portalLinks.get(dimKey).forEach((blockPos, dimensionalBlockPos) -> {
-                NbtCompound link = new NbtCompound();
-                link.putString("fromDimID", dimKey.toString());
-                link.putLong("fromPos", blockPos.asLong());
-                link.put("to", dimensionalBlockPos.toTag(new NbtCompound()));
-                links.add(link);
+                entries.add(new Entry(dimKey, blockPos.asLong(), dimensionalBlockPos));
             });
         });
-        tag.put("portalLinks", links);
-        return tag;
+
+        return entries;
     }
 
     public DimensionalBlockPos getDestination(BlockPos portalFramePos, RegistryKey<World> dimID) {
@@ -76,5 +74,14 @@ public class PortalLinkingStorage extends PersistentState {
     @Override
     public boolean isDirty() {
         return true;
+    }
+
+    public record Entry(Identifier fromID, Long fromPos, DimensionalBlockPos to) {
+        public static final Codec<Entry> CODEC = RecordCodecBuilder.create(
+                instance -> instance.group(
+                        Identifier.CODEC.fieldOf("fromDimID").forGetter(Entry::fromID),
+                        Codec.LONG.fieldOf("fromPos").forGetter(Entry::fromPos),
+                        DimensionalBlockPos.CODEC.fieldOf("to").forGetter(Entry::to)
+                ).apply(instance, Entry::new));
     }
 }
