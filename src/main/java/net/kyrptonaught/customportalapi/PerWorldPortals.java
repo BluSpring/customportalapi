@@ -1,9 +1,8 @@
 package net.kyrptonaught.customportalapi;
 
 import net.kyrptonaught.customportalapi.util.PortalLink;
-import net.minecraft.block.Block;
-import net.minecraft.registry.Registries;
-
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.block.Block;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,8 +17,8 @@ public class PerWorldPortals {
     }
 
     public static void registerWorldPortal(PortalLink portalLink) {
-        if (!CustomPortalApiRegistry.portals.containsKey(Registries.BLOCK.get(portalLink.block))) {
-            Block blockId = Registries.BLOCK.get(portalLink.block);
+        if (!CustomPortalApiRegistry.portals.containsKey(BuiltInRegistries.BLOCK.getValue(portalLink.block))) {
+            Block blockId = BuiltInRegistries.BLOCK.getValue(portalLink.block);
             worldPortals.add(blockId);
             CustomPortalApiRegistry.addPortal(blockId, portalLink);
         }

@@ -3,12 +3,17 @@ package net.kyrptonaught.customportalapi.util;
 import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
 import net.kyrptonaught.customportalapi.CustomPortalBlock;
 import net.minecraft.block.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EndPortalBlock;
+import net.minecraft.world.level.block.NetherPortalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class CustomPortalHelper {
-    public static boolean isInstanceOfCustomPortal(World world, BlockPos pos) {
+    public static boolean isInstanceOfCustomPortal(Level world, BlockPos pos) {
         return isInstanceOfCustomPortal(world.getBlockState(pos));
     }
 
@@ -16,13 +21,13 @@ public class CustomPortalHelper {
         return state.getBlock() instanceof CustomPortalBlock;
     }
 
-    public static boolean isInstanceOfPortalFrame(World world, BlockPos pos) {
-        if (world.isInBuildLimit(pos))
+    public static boolean isInstanceOfPortalFrame(Level world, BlockPos pos) {
+        if (world.isInWorldBounds(pos))
             return CustomPortalApiRegistry.isRegisteredFrameBlock(world.getBlockState(pos));
         return false;
     }
 
-    public static Block getPortalBase(World world, BlockPos pos) {
+    public static Block getPortalBase(Level world, BlockPos pos) {
         if (isInstanceOfCustomPortal(world, pos)) {
             return ((CustomPortalBlock) world.getBlockState(pos).getBlock()).getPortalBase(world, pos);
         } else if (isInstanceOfPortalFrame(world, pos))
@@ -31,32 +36,32 @@ public class CustomPortalHelper {
         return Blocks.AIR;
     }
 
-    public static Block getPortalBaseDefault(World world, BlockPos pos) {
+    public static Block getPortalBaseDefault(Level world, BlockPos pos) {
         if (isInstanceOfCustomPortal(world, pos)) {
             Direction.Axis axis = getAxisFrom(world.getBlockState(pos));
 
             if (axis != Direction.Axis.Y) {
-                if (isInstanceOfPortalFrame(world, pos.down()))
-                    return world.getBlockState(pos.down()).getBlock();
-                if (isInstanceOfPortalFrame(world, pos.up()))
-                    return world.getBlockState(pos.up()).getBlock();
+                if (isInstanceOfPortalFrame(world, pos.below()))
+                    return world.getBlockState(pos.below()).getBlock();
+                if (isInstanceOfPortalFrame(world, pos.above()))
+                    return world.getBlockState(pos.above()).getBlock();
             } else axis = Direction.Axis.Z;
 
-            if (isInstanceOfPortalFrame(world, pos.offset(axis, -1)))
-                return world.getBlockState(pos.offset(axis, -1)).getBlock();
-            if (isInstanceOfPortalFrame(world, pos.offset(axis, 1)))
-                return world.getBlockState(pos.offset(axis, 1)).getBlock();
+            if (isInstanceOfPortalFrame(world, pos.relative(axis, -1)))
+                return world.getBlockState(pos.relative(axis, -1)).getBlock();
+            if (isInstanceOfPortalFrame(world, pos.relative(axis, 1)))
+                return world.getBlockState(pos.relative(axis, 1)).getBlock();
 
-            return getPortalBaseDefault(world, pos.offset(axis, -1));
+            return getPortalBaseDefault(world, pos.relative(axis, -1));
         } else if (isInstanceOfPortalFrame(world, pos))
             return world.getBlockState(pos).getBlock();
 
         return Blocks.AIR;
     }
 
-    public static BlockPos getClosestFrameBlock(World world, BlockPos pos) {
-        if (isInstanceOfPortalFrame(world, pos.down()))
-            return pos.down();
+    public static BlockPos getClosestFrameBlock(Level world, BlockPos pos) {
+        if (isInstanceOfPortalFrame(world, pos.below()))
+            return pos.below();
         if (isInstanceOfPortalFrame(world, pos.east()))
             return pos.east();
         if (isInstanceOfPortalFrame(world, pos.west()))
@@ -65,16 +70,16 @@ public class CustomPortalHelper {
             return pos.north();
         if (isInstanceOfPortalFrame(world, pos.south()))
             return pos.south();
-        if (isInstanceOfPortalFrame(world, pos.up()))
-            return pos.up();
+        if (isInstanceOfPortalFrame(world, pos.above()))
+            return pos.above();
         return pos;
     }
 
     public static Direction.Axis getAxisFrom(BlockState state) {
         if (state.getBlock() instanceof CustomPortalBlock)
-            return state.get(CustomPortalBlock.AXIS);
+            return state.getValue(CustomPortalBlock.AXIS);
         if (state.getBlock() instanceof NetherPortalBlock)
-            return state.get(NetherPortalBlock.AXIS);
+            return state.getValue(NetherPortalBlock.AXIS);
         if (state.getBlock() instanceof EndPortalBlock)
             return Direction.Axis.Y;
         return Direction.Axis.X;
@@ -82,7 +87,7 @@ public class CustomPortalHelper {
 
     public static BlockState blockWithAxis(BlockState state, Direction.Axis axis) {
         if (state.getBlock() instanceof CustomPortalBlock)
-            return state.with(CustomPortalBlock.AXIS, axis);
+            return state.setValue(CustomPortalBlock.AXIS, axis);
         return state;
     }
 }

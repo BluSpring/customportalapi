@@ -11,55 +11,55 @@ import net.kyrptonaught.customportalapi.portal.PortalPlacer;
 import net.kyrptonaught.customportalapi.portal.frame.FlatPortalAreaHelper;
 import net.kyrptonaught.customportalapi.portal.frame.VanillaPortalAreaHelper;
 import net.kyrptonaught.customportalapi.portal.linking.PortalLinkingStorage;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 
 public class CustomPortalsMod implements ModInitializer {
     public static final String MOD_ID = "customportalapi";
     public static CustomPortalBlock portalBlock;
-    public static Identifier VANILLAPORTAL_FRAMETESTER = Identifier.of(MOD_ID, "vanillanether");
-    public static Identifier FLATPORTAL_FRAMETESTER = Identifier.of(MOD_ID, "flat");
+    public static ResourceLocation VANILLAPORTAL_FRAMETESTER = ResourceLocation.fromNamespaceAndPath(MOD_ID, "vanillanether");
+    public static ResourceLocation FLATPORTAL_FRAMETESTER = ResourceLocation.fromNamespaceAndPath(MOD_ID, "flat");
     public static PortalLinkingStorage portalLinkingStorage;
 
     @Override
     public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
-            portalLinkingStorage = persistentStateManager.getOrCreate(PortalLinkingStorage.getPersistentStateType());
+            DimensionDataStorage persistentStateManager = server.getLevel(Level.OVERWORLD).getDataStorage();
+            portalLinkingStorage = persistentStateManager.computeIfAbsent(PortalLinkingStorage.getPersistentStateType());
         });
         CustomPortalApiRegistry.registerPortalFrameTester(VANILLAPORTAL_FRAMETESTER, VanillaPortalAreaHelper::new);
         CustomPortalApiRegistry.registerPortalFrameTester(FLATPORTAL_FRAMETESTER, FlatPortalAreaHelper::new);
         UseItemCallback.EVENT.register(((player, world, hand) -> {
-            ItemStack stack = player.getStackInHand(hand);
-            if (!world.isClient()) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (!world.isClientSide()) {
                 Item item = stack.getItem();
                 if (PortalIgnitionSource.isRegisteredIgnitionSourceWith(item)) {
-                    HitResult hit = player.raycast(6, 1, false);
+                    HitResult hit = player.pick(6, 1, false);
                     if (hit.getType() == HitResult.Type.BLOCK) {
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos usedBlockPos = blockHit.getBlockPos();
-                        if (PortalPlacer.attemptPortalLight(world, usedBlockPos.offset(blockHit.getSide()), PortalIgnitionSource.ItemUseSource(item).withPlayer(player))) {
-                            return ActionResult.SUCCESS_SERVER;
+                        if (PortalPlacer.attemptPortalLight(world, usedBlockPos.relative(blockHit.getDirection()), PortalIgnitionSource.ItemUseSource(item).withPlayer(player))) {
+                            return InteractionResult.SUCCESS_SERVER;
                         }
                     }
                 }
             }
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }));
 
         PayloadTypeRegistry.playS2C().register(LinkSyncPacket.PACKET_ID, LinkSyncPacket.codec);
@@ -95,15 +95,15 @@ public class CustomPortalsMod implements ModInitializer {
     //todo fix this with CustomPortalBuilder?
     static {
         portalBlock = (CustomPortalBlock) Blocks.register(
-                RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(CustomPortalsMod.MOD_ID, "customportalblock")),
+                ResourceKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(CustomPortalsMod.MOD_ID, "customportalblock")),
                 CustomPortalBlock::new,
-                AbstractBlock.Settings.create()
+                BlockBehaviour.Properties.of()
                         .noCollision()
-                        .ticksRandomly()
+                        .randomTicks()
                         .strength(-1.0f)
-                        .sounds(BlockSoundGroup.GLASS)
-                        .luminance(state -> 11)
-                        .pistonBehavior(PistonBehavior.BLOCK)
+                        .sound(SoundType.GLASS)
+                        .lightLevel(state -> 11)
+                        .pushReaction(PushReaction.BLOCK)
         );
 
     }

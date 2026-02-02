@@ -10,14 +10,13 @@ import net.kyrptonaught.customportalapi.portal.PortalIgnitionSource;
 import net.kyrptonaught.customportalapi.util.ColorUtil;
 import net.kyrptonaught.customportalapi.util.PortalLink;
 import net.kyrptonaught.customportalapi.util.SHOULDTP;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -53,7 +52,7 @@ public class CustomPortalBuilder {
      * @return the raw PortalLink created from this builder.
      */
     public PortalLink registerPortal() {
-        CustomPortalApiRegistry.addPortal(Registries.BLOCK.get(portalLink.block), portalLink);
+        CustomPortalApiRegistry.addPortal(BuiltInRegistries.BLOCK.getValue(portalLink.block), portalLink);
         return portalLink;
     }
 
@@ -65,7 +64,7 @@ public class CustomPortalBuilder {
      */
     @Deprecated
     public PortalLink registerPortalForced() {
-        CustomPortalApiRegistry.forceAddPortal(Registries.BLOCK.get(portalLink.block), portalLink);
+        CustomPortalApiRegistry.forceAddPortal(BuiltInRegistries.BLOCK.getValue(portalLink.block), portalLink);
         return portalLink;
     }
 
@@ -74,7 +73,7 @@ public class CustomPortalBuilder {
      *
      * @param blockID Block identifier of the portal's frame block
      */
-    public CustomPortalBuilder frameBlock(Identifier blockID) {
+    public CustomPortalBuilder frameBlock(ResourceLocation blockID) {
         portalLink.block = blockID;
         return this;
     }
@@ -85,7 +84,7 @@ public class CustomPortalBuilder {
      * @param block The Block to be used as the portal's frame block
      */
     public CustomPortalBuilder frameBlock(Block block) {
-        portalLink.block = Registries.BLOCK.getId(block);
+        portalLink.block = BuiltInRegistries.BLOCK.getKey(block);
         return this;
     }
 
@@ -94,7 +93,7 @@ public class CustomPortalBuilder {
      *
      * @param dimID Identifier of the Dimension the portal will travel to
      */
-    public CustomPortalBuilder destDimID(Identifier dimID) {
+    public CustomPortalBuilder destDimID(ResourceLocation dimID) {
         portalLink.dimID = dimID;
         return this;
     }
@@ -102,7 +101,7 @@ public class CustomPortalBuilder {
     /**
      * Specify the color to be used to tint the portal block.
      *
-     * @param color Single Color int value used for tinting. See {@link net.minecraft.util.DyeColor}
+     * @param color Single Color int value used for tinting. See {@link net.minecraft.world.item.DyeColor}
      */
     public CustomPortalBuilder tintColor(int color) {
         portalLink.colorID = color;
@@ -148,7 +147,7 @@ public class CustomPortalBuilder {
     /**
      * Specify a Custom Ignition Source to be used to ignite the portal. You must manually trigger the ignition yourself.
      */
-    public CustomPortalBuilder customIgnitionSource(Identifier customSourceID) {
+    public CustomPortalBuilder customIgnitionSource(ResourceLocation customSourceID) {
         portalLink.portalIgnitionSource = PortalIgnitionSource.CustomSource(customSourceID);
         return this;
     }
@@ -188,7 +187,7 @@ public class CustomPortalBuilder {
      * @param returnDimID              Identifer of the dimmension the portal will return you to when leaving destination
      * @param onlyIgnitableInReturnDim Should this portal only be ignitable in returnDimID
      */
-    public CustomPortalBuilder returnDim(Identifier returnDimID, boolean onlyIgnitableInReturnDim) {
+    public CustomPortalBuilder returnDim(ResourceLocation returnDimID, boolean onlyIgnitableInReturnDim) {
         portalLink.returnDimID = returnDimID;
         portalLink.onlyIgnitableInReturnDim = onlyIgnitableInReturnDim;
         return this;
@@ -214,7 +213,7 @@ public class CustomPortalBuilder {
     /**
      * Specify a custom portal frame tester to be used.
      */
-    public CustomPortalBuilder customFrameTester(Identifier frameTester) {
+    public CustomPortalBuilder customFrameTester(ResourceLocation frameTester) {
         portalLink.portalFrameTester = frameTester;
         return this;
     }
@@ -232,7 +231,7 @@ public class CustomPortalBuilder {
      * Register a sound to be played when the player in standing in the portal.
      * CPASoundEventData is just a stub for PositionSoundAmbience as it does not exist serverside
      */
-    public CustomPortalBuilder registerInPortalAmbienceSound(Function<PlayerEntity, CPASoundEventData> event) {
+    public CustomPortalBuilder registerInPortalAmbienceSound(Function<Player, CPASoundEventData> event) {
         portalLink.getInPortalAmbienceEvent().register(event);
         return this;
     }
@@ -241,7 +240,7 @@ public class CustomPortalBuilder {
      * Register a sound to be played when the player teleports.
      * CPASoundEventData is just a stub for PositionSoundAmbience as it does not exist serverside
      */
-    public CustomPortalBuilder registerPostTPPortalAmbience(Function<PlayerEntity, CPASoundEventData> event) {
+    public CustomPortalBuilder registerPostTPPortalAmbience(Function<Player, CPASoundEventData> event) {
         portalLink.getPostTpPortalAmbienceEvent().register(event);
         return this;
     }

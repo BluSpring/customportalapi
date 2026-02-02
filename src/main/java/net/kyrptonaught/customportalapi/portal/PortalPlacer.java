@@ -4,32 +4,31 @@ import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
 import net.kyrptonaught.customportalapi.portal.frame.PortalFrameTester;
 import net.kyrptonaught.customportalapi.util.CustomPortalHelper;
 import net.kyrptonaught.customportalapi.util.PortalLink;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockLocating.Rectangle;
-import net.minecraft.world.World;
-import net.minecraft.world.border.WorldBorder;
-
+import net.minecraft.BlockUtil.FoundRectangle;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.border.WorldBorder;
 import java.util.Optional;
 
 public class PortalPlacer {
-    public static boolean attemptPortalLight(World world, BlockPos portalPos, PortalIgnitionSource ignitionSource) {
+    public static boolean attemptPortalLight(Level world, BlockPos portalPos, PortalIgnitionSource ignitionSource) {
         return attemptPortalLight(world, portalPos, CustomPortalHelper.getClosestFrameBlock(world, portalPos), ignitionSource);
     }
 
-    public static boolean attemptPortalLight(World world, BlockPos portalPos, BlockPos framePos, PortalIgnitionSource ignitionSource) {
+    public static boolean attemptPortalLight(Level world, BlockPos portalPos, BlockPos framePos, PortalIgnitionSource ignitionSource) {
         Block foundationBlock = world.getBlockState(framePos).getBlock();
         PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(foundationBlock);
 
-        if (link == null || !link.doesIgnitionMatch(ignitionSource) || !link.canLightInDim(world.getRegistryKey().getValue()))
+        if (link == null || !link.doesIgnitionMatch(ignitionSource) || !link.canLightInDim(world.dimension().location()))
             return false;
         return createPortal(link, foundationBlock, world, portalPos, framePos, ignitionSource);
     }
 
-    private static boolean createPortal(PortalLink link, Block foundationBlock, World world, BlockPos portalPos, BlockPos framePos, PortalIgnitionSource ignitionSource) {
+    private static boolean createPortal(PortalLink link, Block foundationBlock, Level world, BlockPos portalPos, BlockPos framePos, PortalIgnitionSource ignitionSource) {
         Optional<PortalFrameTester> optional = link.getFrameTester().createInstanceOfPortalFrameTester().getNewPortal(world, portalPos, Direction.Axis.X, foundationBlock);
         //is valid frame, and is correct size(if applicable)
         if (optional.isPresent()) {
@@ -42,16 +41,16 @@ public class PortalPlacer {
         return false;
     }
 
-    public static Optional<Rectangle> createDestinationPortal(ServerWorld world, BlockPos blockPos, BlockState frameBlock, Direction.Axis axis) {
+    public static Optional<FoundRectangle> createDestinationPortal(ServerLevel world, BlockPos blockPos, BlockState frameBlock, Direction.Axis axis) {
         WorldBorder worldBorder = world.getWorldBorder();
         PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(frameBlock.getBlock());
         PortalFrameTester portalFrameTester = link.getFrameTester().createInstanceOfPortalFrameTester();
 
-        int topY = Math.min(world.getTopYInclusive(), world.getBottomY() + world.getLogicalHeight()) - 5;
+        int topY = Math.min(world.getMaxY(), world.getMinY() + world.getLogicalHeight()) - 5;
 
-        int bottomY = world.getBottomY() + 5;
+        int bottomY = world.getMinY() + 5;
 
-        if (world.getRegistryKey().getValue().equals(link.dimID)) {
+        if (world.dimension().location().equals(link.dimID)) {
             if (link.portalSearchYTop != null)
                 topY = link.portalSearchYTop;
             if (link.portalSearchYBottom != null)
@@ -63,13 +62,13 @@ public class PortalPlacer {
                 bottomY = link.returnPortalSearchYBottom;
         }
 
-        for (BlockPos.Mutable mutable : BlockPos.iterateInSquare(blockPos, 32, Direction.WEST, Direction.SOUTH)) {
-            BlockPos testingPos = mutable.toImmutable();
-            if (!worldBorder.contains(testingPos)) continue;
+        for (BlockPos.MutableBlockPos mutable : BlockPos.spiralAround(blockPos, 32, Direction.WEST, Direction.SOUTH)) {
+            BlockPos testingPos = mutable.immutable();
+            if (!worldBorder.isWithinBounds(testingPos)) continue;
 
             for (int y = topY; y >= bottomY; y--) {
-                if (canHoldPortal(world.getBlockState(testingPos.withY(y)))) {
-                    BlockPos testRect = portalFrameTester.doesPortalFitAt(world, testingPos.withY(y + 1), axis);
+                if (canHoldPortal(world.getBlockState(testingPos.atY(y)))) {
+                    BlockPos testRect = portalFrameTester.doesPortalFitAt(world, testingPos.atY(y + 1), axis);
                     if (testRect != null) {
                         portalFrameTester.createPortal(world, testRect, frameBlock, axis);
                         return Optional.of(portalFrameTester.getRectangle());

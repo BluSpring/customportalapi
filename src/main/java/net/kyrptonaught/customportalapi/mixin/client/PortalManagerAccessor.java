@@ -1,12 +1,12 @@
 package net.kyrptonaught.customportalapi.mixin.client;
 
-import net.minecraft.block.Portal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.PortalManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.PortalProcessor;
+import net.minecraft.world.level.block.Portal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(PortalManager.class)
+@Mixin(PortalProcessor.class)
 public interface PortalManagerAccessor {
 
     @Accessor

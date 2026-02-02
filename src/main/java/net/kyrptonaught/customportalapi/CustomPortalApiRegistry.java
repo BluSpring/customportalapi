@@ -2,18 +2,17 @@ package net.kyrptonaught.customportalapi;
 
 import net.kyrptonaught.customportalapi.portal.frame.PortalFrameTester;
 import net.kyrptonaught.customportalapi.util.PortalLink;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 public class CustomPortalApiRegistry {
     protected static final ConcurrentHashMap<Block, PortalLink> portals = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Identifier, PortalFrameTester.PortalFrameTesterFactory> PortalFrameTesters = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<ResourceLocation, PortalFrameTester.PortalFrameTesterFactory> PortalFrameTesters = new ConcurrentHashMap<>();
 
     public static PortalLink getPortalLinkFromBase(Block baseBlock) {
         if (baseBlock == null) return null;
@@ -29,11 +28,11 @@ public class CustomPortalApiRegistry {
         return portals.values();
     }
 
-    public static void registerPortalFrameTester(Identifier frameTesterID, PortalFrameTester.PortalFrameTesterFactory createPortalFrameTester) {
+    public static void registerPortalFrameTester(ResourceLocation frameTesterID, PortalFrameTester.PortalFrameTesterFactory createPortalFrameTester) {
         PortalFrameTesters.put(frameTesterID, createPortalFrameTester);
     }
 
-    public static PortalFrameTester.PortalFrameTesterFactory getPortalFrameTester(Identifier frameTesterID) {
+    public static PortalFrameTester.PortalFrameTesterFactory getPortalFrameTester(ResourceLocation frameTesterID) {
         return PortalFrameTesters.getOrDefault(frameTesterID, null);
     }
 

@@ -9,30 +9,29 @@ import net.kyrptonaught.customportalapi.event.PortalIgniteEvent;
 import net.kyrptonaught.customportalapi.event.PortalPreIgniteEvent;
 import net.kyrptonaught.customportalapi.portal.PortalIgnitionSource;
 import net.kyrptonaught.customportalapi.portal.frame.PortalFrameTester;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
 import java.util.function.Consumer;
 
 public class PortalLink {
-    public Identifier block;
+    public ResourceLocation block;
     public PortalIgnitionSource portalIgnitionSource = PortalIgnitionSource.FIRE;
     private CustomPortalBlock portalBlock = CustomPortalsMod.portalBlock;
-    public Identifier dimID;
-    public Identifier returnDimID = Identifier.of("overworld");
+    public ResourceLocation dimID;
+    public ResourceLocation returnDimID = ResourceLocation.parse("overworld");
     public boolean onlyIgnitableInReturnDim = false;
     public int colorID;
     public int forcedWidth, forcedHeight;
     public Integer portalSearchYBottom, portalSearchYTop;
     public Integer returnPortalSearchYBottom, returnPortalSearchYTop;
-    public Identifier portalFrameTester = CustomPortalsMod.VANILLAPORTAL_FRAMETESTER;
+    public ResourceLocation portalFrameTester = CustomPortalsMod.VANILLAPORTAL_FRAMETESTER;
 
     private Consumer<Entity> postTPEvent;
     private final CPAEvent<Entity, SHOULDTP> beforeTPEvent = new CPAEvent<>(SHOULDTP.CONTINUE_TP);
-    private final CPAEvent<PlayerEntity, CPASoundEventData> inPortalAmbienceEvent = new CPAEvent<>();
-    private final CPAEvent<PlayerEntity, CPASoundEventData> postTpPortalAmbienceEvent = new CPAEvent<>();
+    private final CPAEvent<Player, CPASoundEventData> inPortalAmbienceEvent = new CPAEvent<>();
+    private final CPAEvent<Player, CPASoundEventData> postTpPortalAmbienceEvent = new CPAEvent<>();
 
     private PortalIgniteEvent portalIgniteEvent = (player, world, portalPos, framePos, portalIgnitionSource) -> {
     };
@@ -42,7 +41,7 @@ public class PortalLink {
 
     }
 
-    public PortalLink(Identifier blockID, Identifier dimID, int colorID) {
+    public PortalLink(ResourceLocation blockID, ResourceLocation dimID, int colorID) {
         this.block = blockID;
         this.dimID = dimID;
         this.colorID = colorID;
@@ -60,7 +59,7 @@ public class PortalLink {
         return portalIgnitionSource.sourceType == attemptedSource.sourceType && portalIgnitionSource.ignitionSourceID.equals(attemptedSource.ignitionSourceID);
     }
 
-    public boolean canLightInDim(Identifier dim) {
+    public boolean canLightInDim(ResourceLocation dim) {
         if (!onlyIgnitableInReturnDim) return true;
         return dim.equals(returnDimID) || dim.equals(dimID);
     }
@@ -70,11 +69,11 @@ public class PortalLink {
         return beforeTPEvent;
     }
 
-    public CPAEvent<PlayerEntity, CPASoundEventData> getInPortalAmbienceEvent() {
+    public CPAEvent<Player, CPASoundEventData> getInPortalAmbienceEvent() {
         return inPortalAmbienceEvent;
     }
 
-    public CPAEvent<PlayerEntity, CPASoundEventData> getPostTpPortalAmbienceEvent() {
+    public CPAEvent<Player, CPASoundEventData> getPostTpPortalAmbienceEvent() {
         return postTpPortalAmbienceEvent;
     }
 

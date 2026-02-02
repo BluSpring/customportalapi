@@ -6,21 +6,20 @@ import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.kyrptonaught.customportalapi.util.CustomPortalHelper;
 import net.kyrptonaught.customportalapi.util.CustomTeleporter;
 import net.kyrptonaught.customportalapi.util.PortalLink;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.BlockLocating;
-import net.minecraft.world.TeleportTarget;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
-
+import net.minecraft.BlockUtil;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.phys.Vec3;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -31,7 +30,7 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
     public FlatPortalAreaHelper() {
     }
 
-    public FlatPortalAreaHelper init(WorldAccess world, BlockPos blockPos, Direction.Axis axis, Block... foundations) {
+    public FlatPortalAreaHelper init(LevelAccessor world, BlockPos blockPos, Direction.Axis axis, Block... foundations) {
         VALID_FRAME = Sets.newHashSet(foundations);
         this.world = world;
         this.lowerCorner = this.getLowerCorner(blockPos, Direction.Axis.X, Direction.Axis.Z);
@@ -54,13 +53,13 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
         return this;
     }
 
-    public Optional<PortalFrameTester> getNewPortal(WorldAccess worldAccess, BlockPos blockPos, Direction.Axis axis, Block... foundations) {
+    public Optional<PortalFrameTester> getNewPortal(LevelAccessor worldAccess, BlockPos blockPos, Direction.Axis axis, Block... foundations) {
         return getOrEmpty(worldAccess, blockPos, (areaHelper) -> {
             return areaHelper.isValidFrame() && areaHelper.foundPortalBlocks == 0;
         }, axis, foundations);
     }
 
-    public Optional<PortalFrameTester> getOrEmpty(WorldAccess worldAccess, BlockPos blockPos, Predicate<PortalFrameTester> predicate, Direction.Axis axis, Block... foundations) {
+    public Optional<PortalFrameTester> getOrEmpty(LevelAccessor worldAccess, BlockPos blockPos, Predicate<PortalFrameTester> predicate, Direction.Axis axis, Block... foundations) {
         return Optional.of((PortalFrameTester) new FlatPortalAreaHelper().init(worldAccess, blockPos, axis, foundations)).filter(predicate);
     }
 
@@ -75,29 +74,29 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
 
     public void lightPortal(Block frameBlock) {
         PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(frameBlock);
-        BlockState blockState = CustomPortalHelper.blockWithAxis(link != null ? link.getPortalBlock().getDefaultState() : CustomPortalsMod.getDefaultPortalBlock().getDefaultState(), Direction.Axis.Y);
-        BlockPos.iterate(this.lowerCorner, this.lowerCorner.offset(Direction.Axis.X, this.xSize - 1).offset(Direction.Axis.Z, this.zSize - 1)).forEach((blockPos) -> {
-            this.world.setBlockState(blockPos, blockState, 18);
+        BlockState blockState = CustomPortalHelper.blockWithAxis(link != null ? link.getPortalBlock().defaultBlockState() : CustomPortalsMod.getDefaultPortalBlock().defaultBlockState(), Direction.Axis.Y);
+        BlockPos.betweenClosed(this.lowerCorner, this.lowerCorner.relative(Direction.Axis.X, this.xSize - 1).relative(Direction.Axis.Z, this.zSize - 1)).forEach((blockPos) -> {
+            this.world.setBlock(blockPos, blockState, 18);
         });
     }
 
     @Override
-    public void createPortal(World world, BlockPos pos, BlockState frameBlock, Direction.Axis axis) {
+    public void createPortal(Level world, BlockPos pos, BlockState frameBlock, Direction.Axis axis) {
         for (int i = -1; i < 3; i++) {
-            world.setBlockState(pos.offset(Direction.Axis.X, i).offset(Direction.Axis.Z, -1), frameBlock);
-            world.setBlockState(pos.offset(Direction.Axis.X, i).offset(Direction.Axis.Z, 2), frameBlock);
+            world.setBlockAndUpdate(pos.relative(Direction.Axis.X, i).relative(Direction.Axis.Z, -1), frameBlock);
+            world.setBlockAndUpdate(pos.relative(Direction.Axis.X, i).relative(Direction.Axis.Z, 2), frameBlock);
 
-            world.setBlockState(pos.offset(Direction.Axis.Z, i).offset(Direction.Axis.X, -1), frameBlock);
-            world.setBlockState(pos.offset(Direction.Axis.Z, i).offset(Direction.Axis.X, 2), frameBlock);
+            world.setBlockAndUpdate(pos.relative(Direction.Axis.Z, i).relative(Direction.Axis.X, -1), frameBlock);
+            world.setBlockAndUpdate(pos.relative(Direction.Axis.Z, i).relative(Direction.Axis.X, 2), frameBlock);
         }
         for (int i = 0; i < 2; i++) {
-            placeLandingPad(world, pos.offset(Direction.Axis.X, i).down(), frameBlock);
-            placeLandingPad(world, pos.offset(Direction.Axis.X, i).offset(Direction.Axis.Z, 1).down(), frameBlock);
+            placeLandingPad(world, pos.relative(Direction.Axis.X, i).below(), frameBlock);
+            placeLandingPad(world, pos.relative(Direction.Axis.X, i).relative(Direction.Axis.Z, 1).below(), frameBlock);
 
-            fillAirAroundPortal(world, pos.offset(Direction.Axis.X, i).up());
-            fillAirAroundPortal(world, pos.offset(Direction.Axis.X, i).offset(Direction.Axis.Z, 1).up());
-            fillAirAroundPortal(world, pos.offset(Direction.Axis.X, i).up(2));
-            fillAirAroundPortal(world, pos.offset(Direction.Axis.X, i).offset(Direction.Axis.Z, 1).up(2));
+            fillAirAroundPortal(world, pos.relative(Direction.Axis.X, i).above());
+            fillAirAroundPortal(world, pos.relative(Direction.Axis.X, i).relative(Direction.Axis.Z, 1).above());
+            fillAirAroundPortal(world, pos.relative(Direction.Axis.X, i).above(2));
+            fillAirAroundPortal(world, pos.relative(Direction.Axis.X, i).relative(Direction.Axis.Z, 1).above(2));
         }
         //inits this instance based off of the newly created portal;
         this.lowerCorner = pos;
@@ -107,14 +106,14 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
         lightPortal(frameBlock.getBlock());
     }
 
-    protected void fillAirAroundPortal(World world, BlockPos pos) {
+    protected void fillAirAroundPortal(Level world, BlockPos pos) {
         if (world.getBlockState(pos).isSolid())
-            world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.FORCE_STATE);
+            world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_KNOWN_SHAPE);
     }
 
-    protected void placeLandingPad(World world, BlockPos pos, BlockState frameBlock) {
+    protected void placeLandingPad(Level world, BlockPos pos, BlockState frameBlock) {
         if (!world.getBlockState(pos).isSolid())
-            world.setBlockState(pos, frameBlock);
+            world.setBlockAndUpdate(pos, frameBlock);
     }
 
     @Override
@@ -124,8 +123,8 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
     }
 
     @Override
-    public BlockLocating.Rectangle getRectangle() {
-        return new BlockLocating.Rectangle(lowerCorner, xSize, zSize);
+    public BlockUtil.FoundRectangle getRectangle() {
+        return new BlockUtil.FoundRectangle(lowerCorner, xSize, zSize);
     }
 
     @Override
@@ -139,38 +138,38 @@ public class FlatPortalAreaHelper extends PortalFrameTester {
     }
 
     @Override
-    public BlockPos doesPortalFitAt(World world, BlockPos attemptPos, Direction.Axis axis) {
-        BlockLocating.Rectangle rect = BlockLocating.getLargestRectangle(attemptPos.up(), Direction.Axis.X, 4, Direction.Axis.Z, 4, blockPos -> {
+    public BlockPos doesPortalFitAt(Level world, BlockPos attemptPos, Direction.Axis axis) {
+        BlockUtil.FoundRectangle rect = BlockUtil.getLargestRectangleAround(attemptPos.above(), Direction.Axis.X, 4, Direction.Axis.Z, 4, blockPos -> {
             return world.getBlockState(blockPos).isSolid() &&
-                    !world.getBlockState(blockPos.up()).isSolid() && !world.getBlockState(blockPos.up()).isLiquid() &&
-                    !world.getBlockState(blockPos.up(2)).isSolid() && !world.getBlockState(blockPos.up(2)).isLiquid();
+                    !world.getBlockState(blockPos.above()).isSolid() && !world.getBlockState(blockPos.above()).liquid() &&
+                    !world.getBlockState(blockPos.above(2)).isSolid() && !world.getBlockState(blockPos.above(2)).liquid();
         });
-        return rect.width >= 4 && rect.height >= 4 ? rect.lowerLeft : null;
+        return rect.axis1Size >= 4 && rect.axis2Size >= 4 ? rect.minCorner : null;
     }
 
     @Override
-    public Vec3d getEntityOffsetInPortal(BlockLocating.Rectangle arg, Entity entity, Direction.Axis portalAxis) {
+    public Vec3 getEntityOffsetInPortal(BlockUtil.FoundRectangle arg, Entity entity, Direction.Axis portalAxis) {
         EntityDimensions entityDimensions = entity.getDimensions(entity.getPose());
-        double xSize = arg.width - entityDimensions.width();
-        double zSize = arg.height - entityDimensions.width();
+        double xSize = arg.axis1Size - entityDimensions.width();
+        double zSize = arg.axis2Size - entityDimensions.width();
 
-        double deltaX = MathHelper.getLerpProgress(entity.getX(), arg.lowerLeft.getX(), arg.lowerLeft.getX() + xSize);
-        double deltaZ = MathHelper.getLerpProgress(entity.getZ(), arg.lowerLeft.getZ(), arg.lowerLeft.getZ() + zSize);
+        double deltaX = Mth.inverseLerp(entity.getX(), arg.minCorner.getX(), arg.minCorner.getX() + xSize);
+        double deltaZ = Mth.inverseLerp(entity.getZ(), arg.minCorner.getZ(), arg.minCorner.getZ() + zSize);
 
-        return new Vec3d(deltaX, arg.lowerLeft.getY(), deltaZ);
+        return new Vec3(deltaX, arg.minCorner.getY(), deltaZ);
     }
 
     @Override
-    public TeleportTarget getTPTargetInPortal(ServerWorld world, Block frameBlock, BlockLocating.Rectangle portalRect, Direction.Axis portalAxis, Vec3d prevOffset, Entity entity) {
+    public TeleportTransition getTPTargetInPortal(ServerLevel world, Block frameBlock, BlockUtil.FoundRectangle portalRect, Direction.Axis portalAxis, Vec3 prevOffset, Entity entity) {
         EntityDimensions entityDimensions = entity.getDimensions(entity.getPose());
-        double xSize = portalRect.width - entityDimensions.width();
-        double zSize = portalRect.height - entityDimensions.width();
+        double xSize = portalRect.axis1Size - entityDimensions.width();
+        double zSize = portalRect.axis2Size - entityDimensions.width();
 
-        double x = MathHelper.lerp(prevOffset.x, portalRect.lowerLeft.getX(), portalRect.lowerLeft.getX() + xSize);
-        double y = MathHelper.lerp(prevOffset.y, portalRect.lowerLeft.getY() - 1, portalRect.lowerLeft.getY() + 1);
-        double z = MathHelper.lerp(prevOffset.z, portalRect.lowerLeft.getZ(), portalRect.lowerLeft.getZ() + zSize);
+        double x = Mth.lerp(prevOffset.x, portalRect.minCorner.getX(), portalRect.minCorner.getX() + xSize);
+        double y = Mth.lerp(prevOffset.y, portalRect.minCorner.getY() - 1, portalRect.minCorner.getY() + 1);
+        double z = Mth.lerp(prevOffset.z, portalRect.minCorner.getZ(), portalRect.minCorner.getZ() + zSize);
 
-        TeleportTarget.PostDimensionTransition post = CustomTeleporter.sendTravelThroughPortalPacket(frameBlock).then(entityx -> entityx.addPortalChunkTicketAt(portalRect.lowerLeft));
-        return new TeleportTarget(world, new Vec3d(x, portalRect.lowerLeft.getY() + 1, z), entity.getVelocity(), entity.getYaw(), entity.getPitch(), post);
+        TeleportTransition.PostTeleportTransition post = CustomTeleporter.sendTravelThroughPortalPacket(frameBlock).then(entityx -> entityx.placePortalTicket(portalRect.minCorner));
+        return new TeleportTransition(world, new Vec3(x, portalRect.minCorner.getY() + 1, z), entity.getDeltaMovement(), entity.getYRot(), entity.getXRot(), post);
     }
 }
