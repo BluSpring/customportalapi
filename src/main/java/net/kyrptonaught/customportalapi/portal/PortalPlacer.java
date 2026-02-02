@@ -4,10 +4,10 @@ import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
 import net.kyrptonaught.customportalapi.portal.frame.PortalFrameTester;
 import net.kyrptonaught.customportalapi.util.CustomPortalHelper;
 import net.kyrptonaught.customportalapi.util.PortalLink;
-import net.minecraft.BlockUtil.FoundRectangle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.BlockUtil.FoundRectangle;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -23,7 +23,7 @@ public class PortalPlacer {
         Block foundationBlock = world.getBlockState(framePos).getBlock();
         PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(foundationBlock);
 
-        if (link == null || !link.doesIgnitionMatch(ignitionSource) || !link.canLightInDim(world.dimension().location()))
+        if (link == null || !link.doesIgnitionMatch(ignitionSource) || !link.canLightInDim(world.dimension().identifier()))
             return false;
         return createPortal(link, foundationBlock, world, portalPos, framePos, ignitionSource);
     }
@@ -50,7 +50,7 @@ public class PortalPlacer {
 
         int bottomY = world.getMinY() + 5;
 
-        if (world.dimension().location().equals(link.dimID)) {
+        if (world.dimension().identifier().equals(link.dimID)) {
             if (link.portalSearchYTop != null)
                 topY = link.portalSearchYTop;
             if (link.portalSearchYBottom != null)

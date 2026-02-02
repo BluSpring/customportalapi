@@ -5,19 +5,18 @@ import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.kyrptonaught.customportalapi.portal.PortalPlacer;
 import net.kyrptonaught.customportalapi.portal.frame.PortalFrameTester;
 import net.kyrptonaught.customportalapi.portal.linking.DimensionalBlockPos;
-import net.minecraft.BlockUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.util.BlockUtil;
 import net.minecraft.util.Mth;
-import net.minecraft.util.math.*;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
@@ -41,18 +40,18 @@ public class CustomTeleporter {
             return null;
 
         ResourceKey<Level> destKey = wrapRegistryKey(link.dimID);
-        if (world.dimension().location().equals(destKey.location()))//if already in destination
+        if (world.dimension().identifier().equals(destKey.identifier()))//if already in destination
             destKey = wrapRegistryKey(link.returnDimID);
 
         ServerLevel destination = ((ServerLevel) world).getServer().getLevel(destKey);
         if (destination == null) return null;
         if (!entity.canUsePortal(false)) return null;
 
-        destination.getChunkSource().addTicketWithRadius(TicketType.PORTAL, new ChunkPos(BlockPos.containing(portalPos.getX() / destination.dimensionType().coordinateScale(), portalPos.getY() / destination.dimensionType().coordinateScale(), portalPos.getZ() / destination.dimensionType().coordinateScale())), 3);
+        destination.getChunkSource().addTicketWithRadius(TicketType.PORTAL, ChunkPos.containing(BlockPos.containing(portalPos.getX() / destination.dimensionType().coordinateScale(), portalPos.getY() / destination.dimensionType().coordinateScale(), portalPos.getZ() / destination.dimensionType().coordinateScale())), 3);
         return customTPTarget(destination, entity, portalPos, portalBase, link.getFrameTester());
     }
 
-    public static ResourceKey<Level> wrapRegistryKey(ResourceLocation dimID) {
+    public static ResourceKey<Level> wrapRegistryKey(Identifier dimID) {
         return ResourceKey.create(Registries.DIMENSION, dimID);
     }
 
@@ -65,7 +64,7 @@ public class CustomTeleporter {
 
         DimensionalBlockPos destinationPos = CustomPortalsMod.portalLinkingStorage.getDestination(fromPortalRectangle.minCorner, entity.level().dimension());
 
-        if (destinationPos != null && destinationPos.dimensionType.equals(destinationWorld.dimension().location())) {
+        if (destinationPos != null && destinationPos.dimensionType.equals(destinationWorld.dimension().identifier())) {
             PortalFrameTester portalFrameTester = portalFrameTesterFactory.createInstanceOfPortalFrameTester().init(destinationWorld, destinationPos.pos, portalAxis, frameBlock);
             if (portalFrameTester.isValidFrame()) {
                 if (!portalFrameTester.isAlreadyLitPortalFrame()) {

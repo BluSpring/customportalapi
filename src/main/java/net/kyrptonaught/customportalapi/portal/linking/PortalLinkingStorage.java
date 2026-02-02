@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -20,7 +20,7 @@ public class PortalLinkingStorage extends SavedData {
                     Entry.CODEC.listOf().fieldOf("portalLinks").forGetter(PortalLinkingStorage::getEntries)
             ).apply(instance, PortalLinkingStorage::new));
 
-    private final ConcurrentHashMap<ResourceLocation, ConcurrentHashMap<BlockPos, DimensionalBlockPos>> portalLinks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Identifier, ConcurrentHashMap<BlockPos, DimensionalBlockPos>> portalLinks = new ConcurrentHashMap<>();
 
     public PortalLinkingStorage() {
 
@@ -49,8 +49,8 @@ public class PortalLinkingStorage extends SavedData {
     }
 
     public DimensionalBlockPos getDestination(BlockPos portalFramePos, ResourceKey<Level> dimID) {
-        if (dimID != null && portalFramePos != null && portalLinks.containsKey(dimID.location()))
-            return portalLinks.get(dimID.location()).get(portalFramePos);
+        if (dimID != null && portalFramePos != null && portalLinks.containsKey(dimID.identifier()))
+            return portalLinks.get(dimID.identifier()).get(portalFramePos);
 
         return null;
     }
@@ -60,14 +60,14 @@ public class PortalLinkingStorage extends SavedData {
         addLink(destPortalFramePos, destDimID, portalFramePos, dimID);
     }
 
-    private void addLink(BlockPos portalFramePos, ResourceLocation dimID, BlockPos destPortalFramePos, ResourceLocation destDimID) {
+    private void addLink(BlockPos portalFramePos, Identifier dimID, BlockPos destPortalFramePos, Identifier destDimID) {
         if (!portalLinks.containsKey(dimID))
             portalLinks.put(dimID, new ConcurrentHashMap<>());
         portalLinks.get(dimID).put(portalFramePos, new DimensionalBlockPos(destDimID, destPortalFramePos));
     }
 
     private void addLink(BlockPos portalFramePos, ResourceKey<Level> dimID, BlockPos destPortalFramePos, ResourceKey<Level> destDimID) {
-        addLink(portalFramePos, dimID.location(), destPortalFramePos, destDimID.location());
+        addLink(portalFramePos, dimID.identifier(), destPortalFramePos, destDimID.identifier());
     }
 
     @Override
@@ -75,10 +75,10 @@ public class PortalLinkingStorage extends SavedData {
         return true;
     }
 
-    public record Entry(ResourceLocation fromID, Long fromPos, DimensionalBlockPos to) {
+    public record Entry(Identifier fromID, Long fromPos, DimensionalBlockPos to) {
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        ResourceLocation.CODEC.fieldOf("fromDimID").forGetter(Entry::fromID),
+                        Identifier.CODEC.fieldOf("fromDimID").forGetter(Entry::fromID),
                         Codec.LONG.fieldOf("fromPos").forGetter(Entry::fromPos),
                         DimensionalBlockPos.CODEC.fieldOf("to").forGetter(Entry::to)
                 ).apply(instance, Entry::new));

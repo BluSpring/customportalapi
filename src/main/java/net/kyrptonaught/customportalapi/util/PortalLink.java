@@ -9,24 +9,24 @@ import net.kyrptonaught.customportalapi.event.PortalIgniteEvent;
 import net.kyrptonaught.customportalapi.event.PortalPreIgniteEvent;
 import net.kyrptonaught.customportalapi.portal.PortalIgnitionSource;
 import net.kyrptonaught.customportalapi.portal.frame.PortalFrameTester;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import java.util.function.Consumer;
 
 public class PortalLink {
-    public ResourceLocation block;
+    public Identifier block;
     public PortalIgnitionSource portalIgnitionSource = PortalIgnitionSource.FIRE;
     private CustomPortalBlock portalBlock = CustomPortalsMod.portalBlock;
-    public ResourceLocation dimID;
-    public ResourceLocation returnDimID = ResourceLocation.parse("overworld");
+    public Identifier dimID;
+    public Identifier returnDimID = Identifier.parse("overworld");
     public boolean onlyIgnitableInReturnDim = false;
     public int colorID;
     public int forcedWidth, forcedHeight;
     public Integer portalSearchYBottom, portalSearchYTop;
     public Integer returnPortalSearchYBottom, returnPortalSearchYTop;
-    public ResourceLocation portalFrameTester = CustomPortalsMod.VANILLAPORTAL_FRAMETESTER;
+    public Identifier portalFrameTester = CustomPortalsMod.VANILLAPORTAL_FRAMETESTER;
 
     private Consumer<Entity> postTPEvent;
     private final CPAEvent<Entity, SHOULDTP> beforeTPEvent = new CPAEvent<>(SHOULDTP.CONTINUE_TP);
@@ -41,7 +41,7 @@ public class PortalLink {
 
     }
 
-    public PortalLink(ResourceLocation blockID, ResourceLocation dimID, int colorID) {
+    public PortalLink(Identifier blockID, Identifier dimID, int colorID) {
         this.block = blockID;
         this.dimID = dimID;
         this.colorID = colorID;
@@ -59,7 +59,7 @@ public class PortalLink {
         return portalIgnitionSource.sourceType == attemptedSource.sourceType && portalIgnitionSource.ignitionSourceID.equals(attemptedSource.ignitionSourceID);
     }
 
-    public boolean canLightInDim(ResourceLocation dim) {
+    public boolean canLightInDim(Identifier dim) {
         if (!onlyIgnitableInReturnDim) return true;
         return dim.equals(returnDimID) || dim.equals(dimID);
     }

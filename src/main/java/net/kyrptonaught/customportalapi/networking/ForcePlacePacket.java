@@ -5,10 +5,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record ForcePlacePacket(BlockPos pos, int axis) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ForcePlacePacket> PACKET_ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CustomPortalsMod.MOD_ID, "forceplace"));
+    public static final CustomPacketPayload.Type<ForcePlacePacket> PACKET_ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(CustomPortalsMod.MOD_ID, "forceplace"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ForcePlacePacket> codec = StreamCodec.ofMember(ForcePlacePacket::write, ForcePlacePacket::read);
 
     public static ForcePlacePacket read(RegistryFriendlyByteBuf buf) {

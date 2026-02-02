@@ -3,28 +3,28 @@ package net.kyrptonaught.customportalapi.portal.linking;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class DimensionalBlockPos {
     public static final Codec<DimensionalBlockPos> CODEC = RecordCodecBuilder.create(
             instance -> instance.group(
-                    ResourceLocation.CODEC.fieldOf("dimID").forGetter(DimensionalBlockPos::getDimension),
+                    Identifier.CODEC.fieldOf("dimID").forGetter(DimensionalBlockPos::getDimension),
                     Codec.LONG.fieldOf("pos").forGetter(DimensionalBlockPos::getPosLong)
             ).apply(instance, DimensionalBlockPos::new));
 
-    public ResourceLocation dimensionType;
+    public Identifier dimensionType;
     public BlockPos pos;
 
-    public DimensionalBlockPos(ResourceLocation dimension, BlockPos pos) {
+    public DimensionalBlockPos(Identifier dimension, BlockPos pos) {
         this.pos = pos;
         this.dimensionType = dimension;
     }
 
-    public DimensionalBlockPos(ResourceLocation dimension, Long pos) {
+    public DimensionalBlockPos(Identifier dimension, Long pos) {
         this(dimension, BlockPos.of(pos));
     }
 
-    public ResourceLocation getDimension() {
+    public Identifier getDimension() {
         return dimensionType;
     }
 

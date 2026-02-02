@@ -4,9 +4,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.ChunkSectionLayerMap;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
 import net.kyrptonaught.customportalapi.CustomPortalsMod;
@@ -30,8 +30,8 @@ public class CustomPortalsModClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        BlockRenderLayerMap.putBlock(CustomPortalsMod.portalBlock, ChunkSectionLayer.TRANSLUCENT);
-        ColorProviderRegistry.BLOCK.register((state, world, pos, tintIndex) -> {
+        ChunkSectionLayerMap.putBlock(CustomPortalsMod.portalBlock, ChunkSectionLayer.TRANSLUCENT);
+        BlockColorRegistry.register((state, world, pos, tintIndex) -> {
             if (pos != null) {
                 Block block = CustomPortalHelper.getPortalBase(Minecraft.getInstance().level, pos.immutable());
                 PortalLink link = CustomPortalApiRegistry.getPortalLinkFromBase(block);
@@ -41,7 +41,7 @@ public class CustomPortalsModClient implements ClientModInitializer {
         }, CustomPortalsMod.portalBlock);
 
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, CustomPortalsMod.MOD_ID + ":customportalparticle", CUSTOMPORTALPARTICLE);
-        ParticleFactoryRegistry.getInstance().register(CUSTOMPORTALPARTICLE, CustomPortalParticle.Factory::new);
+        ParticleProviderRegistry.getInstance().register(CUSTOMPORTALPARTICLE, CustomPortalParticle.Factory::new);
 
         NetworkManager.registerPackets();
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {

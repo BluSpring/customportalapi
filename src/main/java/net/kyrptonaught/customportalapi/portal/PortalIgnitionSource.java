@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.function.BiFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -23,10 +23,10 @@ public class PortalIgnitionSource {
 
     private static final HashSet<Item> USEITEMS = new HashSet<>();
     public SourceType sourceType;
-    public ResourceLocation ignitionSourceID;
+    public Identifier ignitionSourceID;
     public Player player;
 
-    private PortalIgnitionSource(SourceType sourceType, ResourceLocation ignitionSourceID) {
+    private PortalIgnitionSource(SourceType sourceType, Identifier ignitionSourceID) {
         this.sourceType = sourceType;
         this.ignitionSourceID = ignitionSourceID;
     }
@@ -45,7 +45,7 @@ public class PortalIgnitionSource {
         return new PortalIgnitionSource(SourceType.FLUID, BuiltInRegistries.FLUID.getKey(fluid));
     }
 
-    public static PortalIgnitionSource CustomSource(ResourceLocation ignitionSourceID) {
+    public static PortalIgnitionSource CustomSource(Identifier ignitionSourceID) {
         return new PortalIgnitionSource(SourceType.CUSTOM, ignitionSourceID);
     }
 

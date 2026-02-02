@@ -14,7 +14,7 @@ import net.kyrptonaught.customportalapi.portal.linking.PortalLinkingStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -32,8 +32,8 @@ import net.minecraft.world.phys.HitResult;
 public class CustomPortalsMod implements ModInitializer {
     public static final String MOD_ID = "customportalapi";
     public static CustomPortalBlock portalBlock;
-    public static ResourceLocation VANILLAPORTAL_FRAMETESTER = ResourceLocation.fromNamespaceAndPath(MOD_ID, "vanillanether");
-    public static ResourceLocation FLATPORTAL_FRAMETESTER = ResourceLocation.fromNamespaceAndPath(MOD_ID, "flat");
+    public static Identifier VANILLAPORTAL_FRAMETESTER = Identifier.fromNamespaceAndPath(MOD_ID, "vanillanether");
+    public static Identifier FLATPORTAL_FRAMETESTER = Identifier.fromNamespaceAndPath(MOD_ID, "flat");
     public static PortalLinkingStorage portalLinkingStorage;
 
     @Override
@@ -62,8 +62,8 @@ public class CustomPortalsMod implements ModInitializer {
             return InteractionResult.PASS;
         }));
 
-        PayloadTypeRegistry.playS2C().register(LinkSyncPacket.PACKET_ID, LinkSyncPacket.codec);
-        PayloadTypeRegistry.playS2C().register(ForcePlacePacket.PACKET_ID, ForcePlacePacket.codec);
+        PayloadTypeRegistry.clientboundPlay().register(LinkSyncPacket.PACKET_ID, LinkSyncPacket.codec);
+        PayloadTypeRegistry.clientboundPlay().register(ForcePlacePacket.PACKET_ID, ForcePlacePacket.codec);
 
         /*
         CustomPortalBuilder.beginPortal().frameBlock(Blocks.GLOWSTONE).destDimID(Identifier.of("the_nether")).lightWithWater().setPortalSearchYRange(126, 256).tintColor(125, 20, 20).registerPortal();
@@ -95,7 +95,7 @@ public class CustomPortalsMod implements ModInitializer {
     //todo fix this with CustomPortalBuilder?
     static {
         portalBlock = (CustomPortalBlock) Blocks.register(
-                ResourceKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(CustomPortalsMod.MOD_ID, "customportalblock")),
+                ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(CustomPortalsMod.MOD_ID, "customportalblock")),
                 CustomPortalBlock::new,
                 BlockBehaviour.Properties.of()
                         .noCollision()
