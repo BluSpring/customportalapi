@@ -13,5 +13,5 @@ public interface PortalManagerAccessor {
     Portal getPortal();
 
     @Accessor
-    BlockPos getPos();
+    BlockPos getEntryPosition();
 }

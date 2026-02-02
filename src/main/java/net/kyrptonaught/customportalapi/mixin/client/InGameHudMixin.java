@@ -1,5 +1,7 @@
 package net.kyrptonaught.customportalapi.mixin.client;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
@@ -27,28 +29,27 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Environment(EnvType.CLIENT)
 @Mixin(Gui.class)
 public class InGameHudMixin {
-
     @Shadow
     @Final
-    private Minecraft client;
+    private Minecraft minecraft;
 
     @Unique
     private int lastColor = -1;
 
-    @Redirect(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/ColorHelper;getWhite(F)I", ordinal = 0))
-    public int changeColor(float alpha) {
-        isCustomPortal(client.player);
+    @WrapOperation(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ARGB;white(F)I", ordinal = 0))
+    public int changeColor(float alpha, Operation<Integer> original) {
+        isCustomPortal(minecraft.player);
         if (lastColor >= 0)
             return ARGB.color(ARGB.as8BitChannel(alpha), lastColor);
-        return ARGB.white(alpha);
+        return original.call(alpha);
     }
 
-    @Redirect(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/block/BlockModels;getModelParticleSprite(Lnet/minecraft/block/BlockState;)Lnet/minecraft/client/texture/Sprite;"))
-    public TextureAtlasSprite renderCustomPortalOverlay(BlockModelShaper blockModels, BlockState blockState) {
+    @WrapOperation(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/BlockModelShaper;getParticleIcon(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;"))
+    public TextureAtlasSprite renderCustomPortalOverlay(BlockModelShaper instance, BlockState blockState, Operation<TextureAtlasSprite> original) {
         if (lastColor >= 0) {
-            return this.client.getBlockRenderer().getBlockModelShaper().getParticleIcon(CustomPortalsMod.portalBlock.defaultBlockState());
+            return original.call(instance, CustomPortalsMod.portalBlock.defaultBlockState());
         }
-        return this.client.getBlockRenderer().getBlockModelShaper().getParticleIcon(Blocks.NETHER_PORTAL.defaultBlockState());
+        return original.call(instance, blockState);
     }
 
 
@@ -56,7 +57,7 @@ public class InGameHudMixin {
     private void isCustomPortal(LocalPlayer player) {
         PortalProcessor portalManager = player.portalProcess;
         Portal portalBlock = portalManager != null && portalManager.isInsidePortalThisTick() ? ((PortalManagerAccessor) portalManager).getPortal() : null;
-        BlockPos portalPos = portalManager != null && portalManager.isInsidePortalThisTick() ? ((PortalManagerAccessor) portalManager).getPos() : null;
+        BlockPos portalPos = portalManager != null && portalManager.isInsidePortalThisTick() ? ((PortalManagerAccessor) portalManager).getEntryPosition() : null;
 
         if (portalBlock == null) {
             return;
