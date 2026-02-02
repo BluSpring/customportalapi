@@ -35,7 +35,6 @@ public class WorldRendererMixin {
                 return original.call(instance, link.getPostTpPortalAmbienceEvent().execute(minecraft.player).getInstance());
             }
         }
-        return
-            original.call(instance, sound);
+        return original.call(instance, sound);
     }
 }
