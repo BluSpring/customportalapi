@@ -2,29 +2,29 @@ package net.kyrptonaught.customportalapi.mixin.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.kyrptonaught.customportalapi.CustomPortalApiRegistry;
 import net.kyrptonaught.customportalapi.CustomPortalBlock;
 import net.kyrptonaught.customportalapi.CustomPortalsMod;
 import net.kyrptonaught.customportalapi.util.PortalLink;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.ARGB;
-import net.minecraft.world.entity.PortalProcessor;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.Portal;
-import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.block.BlockStateModelSet;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.entity.PortalProcessor;
+import net.minecraft.world.level.block.Portal;
+import net.minecraft.world.level.block.state.BlockState;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
 @Mixin(Gui.class)
@@ -36,7 +36,7 @@ public class InGameHudMixin {
     @Unique
     private int lastColor = -1;
 
-    @WrapOperation(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ARGB;white(F)I", ordinal = 0))
+    @WrapOperation(method = "extractPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ARGB;white(F)I", ordinal = 0))
     public int changeColor(float alpha, Operation<Integer> original) {
         isCustomPortal(minecraft.player);
         if (lastColor >= 0)
@@ -44,8 +44,8 @@ public class InGameHudMixin {
         return original.call(alpha);
     }
 
-    @WrapOperation(method = "renderPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/BlockModelShaper;getParticleIcon(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;"))
-    public TextureAtlasSprite renderCustomPortalOverlay(BlockModelShaper instance, BlockState blockState, Operation<TextureAtlasSprite> original) {
+    @WrapOperation(method = "extractPortalOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/BlockStateModelSet;getParticleMaterial(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/resources/model/sprite/Material$Baked;"))
+    public Material.Baked renderCustomPortalOverlay(BlockStateModelSet instance, BlockState blockState, Operation<Material.Baked> original) {
         if (lastColor >= 0) {
             return original.call(instance, CustomPortalsMod.portalBlock.defaultBlockState());
         }

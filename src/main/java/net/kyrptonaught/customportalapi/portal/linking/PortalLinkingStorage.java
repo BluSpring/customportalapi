@@ -1,18 +1,20 @@
 package net.kyrptonaught.customportalapi.portal.linking;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.kyrptonaught.customportalapi.CustomPortalsMod;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class PortalLinkingStorage extends SavedData {
     public static final Codec<PortalLinkingStorage> CODEC = RecordCodecBuilder.create(
@@ -33,7 +35,7 @@ public class PortalLinkingStorage extends SavedData {
     }
 
     public static SavedDataType<PortalLinkingStorage> getPersistentStateType() {
-        return new SavedDataType<>(CustomPortalsMod.MOD_ID, PortalLinkingStorage::new, CODEC, DataFixTypes.LEVEL);
+        return new SavedDataType<>(Identifier.fromNamespaceAndPath(CustomPortalsMod.MOD_ID, "portal_linking"), PortalLinkingStorage::new, CODEC, DataFixTypes.LEVEL);
     }
 
     public List<Entry> getEntries() {
